@@ -1,40 +1,35 @@
 #!/usr/bin/python3
-""" State Module for HBNB project """
-from os import environ
-
-from sqlalchemy import Column, String
-from sqlalchemy.orm import relationship
+"""Defines the State class."""
 
 import models
+from os import getenv
 from models.base_model import Base, BaseModel
-from models.city import City
+from models.city import City, Column, String
+from sqlalchemy.orm import relationship
 
 
 class State(BaseModel, Base):
-    """ State class """
-    # # name = ""
-    if environ.get('HBNB_TYPE_STORAGE') == 'db':
+    """a state for a MySQL database.
 
-        __tablename__ = "states"
-        name = Column(String(128), nullable=False)
+    Inherits from SQLAlchemy Base and links to the MySQL table states.
 
-        cities = relationship("City",
-                              backref="state",
-                              cascade="all, delete-orphan",
-                              passive_deletes=True)
-    else:
-        name = ""
+    Attributes:
+        __tablename__ (str): the MySQL table to store States.
+        name (sqlalchemy String): name of the State.
+        cities (sqlalchemy relationship): State-City relationship.
+    """
 
-    def __init__(self, *args, **kwargs):
-        """initializes state"""
-        super().__init__(*args, **kwargs)
+    __tablename__ = "states"
+    name = Column(String(128), nullable=False)
+    cities = relationship("City", backref="state", cascade="delete")
 
-    if environ.get('HBNB_TYPE_STORAGE') != 'db':
+    if getenv("HBNB_TYPE_STORAGE") != "db":
+
         @property
         def cities(self):
-            """Return the list of City objects from storage linked to the current State
-
-            Returns: cities in a state
-            """
-            return [city for city in models.storage.all(
-                City).values() if city.state_id == self.id]
+            """Get a list of all related City objects."""
+            return [
+                city
+                for city in list(models.storage.all(City).values())
+                if city.state_id == self.id
+            ]
